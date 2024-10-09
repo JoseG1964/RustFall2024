@@ -1,52 +1,55 @@
-use std::io::{self, Read, Write};
 use std::fs::File;
-use std::process::Command;
-use std::fs::OpenOptions;
+use std::io::{Write, BufReader, BufRead};
 
-struct Car {
-   model: String,
-   year: u32,
+struct Book {
+    title: String,
+    author: String,
+    year: u16,
 }
 
-fn executing_os_commands_linux() {
-    let output = Command::new("python3")
-        .arg("my_script.py")
-        .output()
-        .expect("Failed to execute command");
+fn save_books(books: &Vec<Book>, filename: &str) {
+    // TODO: Implement this function
+    // Hint: Use File::create() and write!() macro
+    let mut file = File::create(filename).unwrap();
 
-    println!("Command output: {}", String::from_utf8_lossy(&output.stdout));
+    for book in books {
+        writeln!(file, "{},{},{}", book.title, book.author, book.year).unwrap();
+    }
 }
 
-fn append_to_file() {
-    let mut file = OpenOptions::new()
-        .append(true)
-        .open("example.txt")
-        .unwrap();
+fn load_books(filename: &str) -> Vec<Book> {
+    // TODO: Implement this function
+    // Hint: Use File::open() and BufReader
+    let file = File::open(filename).unwrap();
+    let reader = BufReader::new(file);
+    let mut books = Vec::new();
 
-    writeln!(file, "This line is appended to the file.").unwrap();
+    for line in reader.lines(){
+        let line = line.unwrap();
+        let parts: Vec<&str> = line.split(',').collect();
+
+        if parts.len()==3{
+            let title = parts[0].to_string();
+            let author = parts[1].to_string();
+            let year = parts[2].parse::<u16>().unwrap();
+            books.push(Book{title, author, year});
+        }
+    }
+    books
 }
 
-fn reading_from_console() {
-    let mut buffer = String::new();
-    let mut file = File::create("user_input.txt").unwrap();
+fn main() {
+    let books = vec![
+        Book { title: "1984".to_string(), author: "George Orwell".to_string(), year: 1949 },
+        Book { title: "To Kill a Mockingbird".to_string(), author: "Harper Lee".to_string(), year: 1960 },
+    ];
 
-    print!("What's the model of your car? ");
-    io::stdout().flush().unwrap();
-    io::stdin().read_line(&mut buffer).unwrap();
-    let model = buffer.trim().to_string();
-    writeln!(file, "{}", model).unwrap();
-    buffer.clear();
+    save_books(&books, "books.txt");
+    println!("Books saved to file.");
 
-    print!("What year is the car? ");
-    io::stdout().flush().unwrap();
-    io::stdin().read_line(&mut buffer).unwrap();
-    let year = buffer.trim().parse().unwrap();
-    writeln!(file, "{}", year);
-
-    let car = Car { model, year };
-    println!("You have a {}, that is from {}!", car.model, car.year);
-
-}
-fn main(){
-   reading_from_console();
+    let loaded_books = load_books("books.txt");
+    println!("Loaded books:");
+    for book in loaded_books {
+        println!("{} by {}, published in {}", book.title, book.author, book.year);
+    }
 }
